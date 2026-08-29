@@ -1,0 +1,7 @@
+com.exemplo.meuprimeiroapp-pngs-0 /data/data/com.termux/files/home/MeuPrimeiroApp/app/build/generated/res/pngs/debug
+com.exemplo.meuprimeiroapp-resValues-1 /data/data/com.termux/files/home/MeuPrimeiroApp/app/build/generated/res/resValues/debug
+com.exemplo.meuprimeiroapp-packageDebugResources-2 /data/data/com.termux/files/home/MeuPrimeiroApp/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.exemplo.meuprimeiroapp-packageDebugResources-3 /data/data/com.termux/files/home/MeuPrimeiroApp/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.exemplo.meuprimeiroapp-debug-4 /data/data/com.termux/files/home/MeuPrimeiroApp/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.exemplo.meuprimeiroapp-debug-5 /data/data/com.termux/files/home/MeuPrimeiroApp/app/src/debug/res
+com.exemplo.meuprimeiroapp-main-6 /data/data/com.termux/files/home/MeuPrimeiroApp/app/src/main/res
