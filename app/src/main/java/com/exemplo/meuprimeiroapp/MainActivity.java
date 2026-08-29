@@ -2,15 +2,36 @@ package com.exemplo.meuprimeiroapp;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.*;
-import android.view.*;
-import android.graphics.Color;
+import android.content.Intent;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
+import android.media.Image;
+import android.media.ImageReader;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.util.DisplayMetrics;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.LinearLayout;
+import android.view.Gravity;
+import android.os.Handler;
+import android.os.Looper;
 
 public class MainActivity extends Activity {
 
-    EditText visor;
-    double numero1 = 0;
-    String operador = "";
+    private static final int REQUEST_CAPTURE = 1001;
+
+    private MediaProjectionManager projectionManager;
+    private MediaProjection mediaProjection;
+    private VirtualDisplay virtualDisplay;
+    private ImageReader imageReader;
+
+    private TextView status;
+    private TextView framesText;
+
+    private long frameCount = 0;
+
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,101 +39,168 @@ public class MainActivity extends Activity {
 
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(20, 20, 20, 20);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(30, 30, 30, 30);
 
-        visor = new EditText(this);
-        visor.setTextSize(32);
-        visor.setGravity(Gravity.RIGHT);
-        visor.setInputType(2);
-        layout.addView(visor);
+        TextView titulo = new TextView(this);
+        titulo.setText("GodeyeV1");
+        titulo.setTextSize(32);
+        titulo.setGravity(Gravity.CENTER);
 
-        String[] botoes = {
-            "7", "8", "9", "÷",
-            "4", "5", "6", "×",
-            "1", "2", "3", "-",
-            "0", "C", "=", "+"
-        };
+        status = new TextView(this);
+        status.setText("Status: parado");
+        status.setTextSize(20);
+        status.setGravity(Gravity.CENTER);
+        status.setPadding(0, 30, 0, 20);
 
-        GridLayout grade = new GridLayout(this);
-        grade.setColumnCount(4);
+        framesText = new TextView(this);
+        framesText.setText("Frames recebidos: 0");
+        framesText.setTextSize(18);
+        framesText.setGravity(Gravity.CENTER);
+        framesText.setPadding(0, 0, 0, 30);
 
-        for (String texto : botoes) {
-            Button botao = new Button(this);
-            botao.setText(texto);
-            botao.setTextSize(20);
+        Button iniciar = new Button(this);
+        iniciar.setText("Iniciar captura");
+        iniciar.setTextSize(18);
 
-            GridLayout.LayoutParams params =
-                    new GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = 120;
-            params.columnSpec =
-                    GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        iniciar.setOnClickListener(v -> solicitarCaptura());
 
-            botao.setLayoutParams(params);
+        layout.addView(titulo);
+        layout.addView(status);
+        layout.addView(framesText);
+        layout.addView(iniciar);
 
-            botao.setOnClickListener(v -> clicar(texto));
-
-            grade.addView(botao);
-        }
-
-        layout.addView(grade);
         setContentView(layout);
     }
 
-    void clicar(String texto) {
+    private void solicitarCaptura() {
 
-        if (texto.equals("C")) {
-            visor.setText("");
-            numero1 = 0;
-            operador = "";
-            return;
-        }
+        projectionManager =
+                (MediaProjectionManager)
+                getSystemService(MEDIA_PROJECTION_SERVICE);
 
-        if (texto.equals("+") || texto.equals("-") ||
-            texto.equals("×") || texto.equals("÷")) {
+        Intent intent =
+                projectionManager.createScreenCaptureIntent();
 
-            if (!visor.getText().toString().isEmpty()) {
-                numero1 = Double.parseDouble(
-                        visor.getText().toString());
-                operador = texto;
-                visor.setText("");
+        startActivityForResult(intent, REQUEST_CAPTURE);
+    }
+
+    @Override
+    protected void onActivityResult(
+            int requestCode,
+            int resultCode,
+            Intent data) {
+
+        super.onActivityResult(
+                requestCode,
+                resultCode,
+                data);
+
+        if (requestCode == REQUEST_CAPTURE) {
+
+            if (resultCode == RESULT_OK) {
+
+                status.setText("Status: iniciando captura...");
+
+                iniciarCaptura(
+                        resultCode,
+                        data);
+
+            } else {
+
+                status.setText(
+                        "Status: captura recusada");
             }
-            return;
         }
+    }
 
-        if (texto.equals("=")) {
-            if (visor.getText().toString().isEmpty())
-                return;
+    private void iniciarCaptura(
+            int resultCode,
+            Intent data) {
 
-            double numero2 = Double.parseDouble(
-                    visor.getText().toString());
+        mediaProjection =
+                projectionManager.getMediaProjection(
+                        resultCode,
+                        data);
 
-            double resultado = 0;
+        DisplayMetrics metrics =
+                getResources().getDisplayMetrics();
 
-            switch (operador) {
-                case "+":
-                    resultado = numero1 + numero2;
-                    break;
-                case "-":
-                    resultado = numero1 - numero2;
-                    break;
-                case "×":
-                    resultado = numero1 * numero2;
-                    break;
-                case "÷":
-                    if (numero2 != 0)
-                        resultado = numero1 / numero2;
-                    else {
-                        visor.setText("Erro");
-                        return;
+        int largura = metrics.widthPixels;
+        int altura = metrics.heightPixels;
+        int densidade = metrics.densityDpi;
+
+        imageReader =
+                ImageReader.newInstance(
+                        largura,
+                        altura,
+                        android.graphics.PixelFormat.RGBA_8888,
+                        2);
+
+        imageReader.setOnImageAvailableListener(
+                reader -> {
+
+                    Image image = null;
+
+                    try {
+
+                        image = reader.acquireLatestImage();
+
+                        if (image != null) {
+
+                            frameCount++;
+
+                            final long frames =
+                                    frameCount;
+
+                            handler.post(() ->
+                                    framesText.setText(
+                                            "Frames recebidos: "
+                                            + frames));
+
+                            image.close();
+                        }
+
+                    } catch (Exception e) {
+
+                        if (image != null) {
+                            image.close();
+                        }
                     }
-                    break;
-            }
 
-            visor.setText(String.valueOf(resultado));
-            return;
+                },
+                handler);
+
+        virtualDisplay =
+                mediaProjection.createVirtualDisplay(
+                        "GodeyeV1",
+                        largura,
+                        altura,
+                        densidade,
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                        imageReader.getSurface(),
+                        null,
+                        handler);
+
+        status.setText(
+                "Status: captura ativa");
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+
+        if (virtualDisplay != null) {
+            virtualDisplay.release();
         }
 
-        visor.append(texto);
+        if (imageReader != null) {
+            imageReader.close();
+        }
+
+        if (mediaProjection != null) {
+            mediaProjection.stop();
+        }
     }
 }
