@@ -97,7 +97,7 @@ public class GodeyeOverlay {
         adicionarBotao(painel, "📐 Mira");
 
         Button fechar = new Button(context);
-        fechar.setText("✕ Fechar");
+        fechar.setText("− Minimizar");
 
         fechar.setOnClickListener(v -> fechar());
 
