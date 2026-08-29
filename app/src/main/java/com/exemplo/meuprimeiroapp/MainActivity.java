@@ -3,9 +3,8 @@ package com.exemplo.meuprimeiroapp;
 import android.app.Activity;
 import android.os.Bundle;
 import android.content.Intent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.IntentFilter;
+import android.net.Uri;
+import android.provider.Settings;
 import android.media.projection.MediaProjectionManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,43 +16,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_CAPTURE = 1001;
 
     private TextView status;
-    private TextView framesText;
-    private TextView posicaoText;
-
-    private BroadcastReceiver receiver =
-            new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(
-                Context context,
-                Intent intent) {
-
-            if ("GODEYE_DETECCAO".equals(
-                    intent.getAction())) {
-
-                long frames =
-                        intent.getLongExtra(
-                                "frames", 0);
-
-                int x =
-                        intent.getIntExtra(
-                                "x", 0);
-
-                int y =
-                        intent.getIntExtra(
-                                "y", 0);
-
-                framesText.setText(
-                        "Frames: " + frames);
-
-                posicaoText.setText(
-                        "Bola branca: X=" +
-                        x +
-                        "  Y=" +
-                        y);
-            }
-        }
-    };
+    private GodeyeOverlay overlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,20 +29,14 @@ public class MainActivity extends Activity {
                 LinearLayout.VERTICAL);
 
         layout.setGravity(Gravity.CENTER);
-
-        layout.setPadding(
-                30, 30, 30, 30);
+        layout.setPadding(30, 30, 30, 30);
 
         TextView titulo =
                 new TextView(this);
 
-        titulo.setText(
-                "Godeye V2.1");
-
+        titulo.setText("Godeye V2.2");
         titulo.setTextSize(32);
-
-        titulo.setGravity(
-                Gravity.CENTER);
+        titulo.setGravity(Gravity.CENTER);
 
         status =
                 new TextView(this);
@@ -88,56 +45,54 @@ public class MainActivity extends Activity {
                 "Status: parado");
 
         status.setTextSize(20);
-
-        status.setGravity(
-                Gravity.CENTER);
-
-        framesText =
-                new TextView(this);
-
-        framesText.setText(
-                "Frames: 0");
-
-        framesText.setTextSize(18);
-
-        framesText.setGravity(
-                Gravity.CENTER);
-
-        posicaoText =
-                new TextView(this);
-
-        posicaoText.setText(
-                "Bola branca: não detectada");
-
-        posicaoText.setTextSize(18);
-
-        posicaoText.setGravity(
-                Gravity.CENTER);
+        status.setGravity(Gravity.CENTER);
+        status.setPadding(0, 30, 0, 30);
 
         Button iniciar =
                 new Button(this);
 
         iniciar.setText(
-                "Iniciar captura");
+                "Iniciar Godeye");
+
+        iniciar.setTextSize(18);
 
         iniciar.setOnClickListener(
-                v -> solicitarCaptura());
+                v -> iniciarGodeye());
 
         layout.addView(titulo);
         layout.addView(status);
-        layout.addView(framesText);
-        layout.addView(posicaoText);
         layout.addView(iniciar);
 
         setContentView(layout);
+    }
+
+    private void iniciarGodeye() {
+
+        if (!Settings.canDrawOverlays(this)) {
+
+            Intent intent =
+                    new Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse(
+                                    "package:" + getPackageName()));
+
+            startActivity(intent);
+
+            status.setText(
+                    "Conceda a permissão e volte ao Godeye");
+
+            return;
+        }
+
+        solicitarCaptura();
     }
 
     private void solicitarCaptura() {
 
         MediaProjectionManager manager =
                 (MediaProjectionManager)
-                        getSystemService(
-                                MEDIA_PROJECTION_SERVICE);
+                getSystemService(
+                        MEDIA_PROJECTION_SERVICE);
 
         Intent intent =
                 manager.createScreenCaptureIntent();
@@ -180,28 +135,13 @@ public class MainActivity extends Activity {
             startForegroundService(
                     serviceIntent);
 
+            overlay =
+                    new GodeyeOverlay(this);
+
+            overlay.mostrar();
+
             status.setText(
-                    "Status: capturando");
+                    "Godeye ativo");
         }
-    }
-
-    @Override
-    protected void onResume() {
-
-        super.onResume();
-
-        registerReceiver(
-                receiver,
-                new IntentFilter(
-                        "GODEYE_DETECCAO"),
-                Context.RECEIVER_NOT_EXPORTED);
-    }
-
-    @Override
-    protected void onPause() {
-
-        unregisterReceiver(receiver);
-
-        super.onPause();
     }
 }
