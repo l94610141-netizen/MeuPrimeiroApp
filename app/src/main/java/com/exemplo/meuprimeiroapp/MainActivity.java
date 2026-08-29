@@ -16,7 +16,9 @@ public class MainActivity extends Activity {
     private static final int REQUEST_CAPTURE = 1001;
 
     private TextView status;
+
     private GodeyeOverlay overlay;
+    private TrajectoryOverlay trajectoryOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,16 +36,14 @@ public class MainActivity extends Activity {
         TextView titulo =
                 new TextView(this);
 
-        titulo.setText("Godeye V2.2");
+        titulo.setText("Godeye V2.3");
         titulo.setTextSize(32);
         titulo.setGravity(Gravity.CENTER);
 
         status =
                 new TextView(this);
 
-        status.setText(
-                "Status: parado");
-
+        status.setText("Status: parado");
         status.setTextSize(20);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, 30, 0, 30);
@@ -51,9 +51,7 @@ public class MainActivity extends Activity {
         Button iniciar =
                 new Button(this);
 
-        iniciar.setText(
-                "Iniciar Godeye");
-
+        iniciar.setText("Iniciar Godeye");
         iniciar.setTextSize(18);
 
         iniciar.setOnClickListener(
@@ -140,8 +138,19 @@ public class MainActivity extends Activity {
 
             overlay.mostrar();
 
+            trajectoryOverlay =
+                    new TrajectoryOverlay(this);
+
+            trajectoryOverlay.mostrar();
+
+            trajectoryOverlay.desenharLinha(
+                    300,
+                    600,
+                    900,
+                    300);
+
             status.setText(
-                    "Godeye ativo");
+                    "Godeye ativo - trajetória de teste");
         }
     }
 }
