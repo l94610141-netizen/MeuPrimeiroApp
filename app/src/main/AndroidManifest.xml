@@ -18,6 +18,11 @@
 
         </activity>
 
+            <service
+            android:name=".CaptureService"
+            android:foregroundServiceType="mediaProjection"
+            android:exported="false" />
+
     </application>
 
 </manifest>
