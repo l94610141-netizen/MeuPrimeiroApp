@@ -18,6 +18,7 @@ public class MainActivity extends Activity {
 
     private TextView status;
     private TextView framesText;
+    private TextView posicaoText;
 
     private BroadcastReceiver receiver =
             new BroadcastReceiver() {
@@ -27,16 +28,29 @@ public class MainActivity extends Activity {
                 Context context,
                 Intent intent) {
 
-            if ("GODEYE_FRAME".equals(
+            if ("GODEYE_DETECCAO".equals(
                     intent.getAction())) {
 
                 long frames =
                         intent.getLongExtra(
                                 "frames", 0);
 
+                int x =
+                        intent.getIntExtra(
+                                "x", 0);
+
+                int y =
+                        intent.getIntExtra(
+                                "y", 0);
+
                 framesText.setText(
-                        "Frames recebidos: "
-                        + frames);
+                        "Frames: " + frames);
+
+                posicaoText.setText(
+                        "Bola branca: X=" +
+                        x +
+                        "  Y=" +
+                        y);
             }
         }
     };
@@ -52,14 +66,20 @@ public class MainActivity extends Activity {
                 LinearLayout.VERTICAL);
 
         layout.setGravity(Gravity.CENTER);
-        layout.setPadding(30, 30, 30, 30);
+
+        layout.setPadding(
+                30, 30, 30, 30);
 
         TextView titulo =
                 new TextView(this);
 
-        titulo.setText("GodeyeV1");
+        titulo.setText(
+                "Godeye V2.1");
+
         titulo.setTextSize(32);
-        titulo.setGravity(Gravity.CENTER);
+
+        titulo.setGravity(
+                Gravity.CENTER);
 
         status =
                 new TextView(this);
@@ -68,16 +88,31 @@ public class MainActivity extends Activity {
                 "Status: parado");
 
         status.setTextSize(20);
-        status.setGravity(Gravity.CENTER);
+
+        status.setGravity(
+                Gravity.CENTER);
 
         framesText =
                 new TextView(this);
 
         framesText.setText(
-                "Frames recebidos: 0");
+                "Frames: 0");
 
         framesText.setTextSize(18);
-        framesText.setGravity(Gravity.CENTER);
+
+        framesText.setGravity(
+                Gravity.CENTER);
+
+        posicaoText =
+                new TextView(this);
+
+        posicaoText.setText(
+                "Bola branca: não detectada");
+
+        posicaoText.setTextSize(18);
+
+        posicaoText.setGravity(
+                Gravity.CENTER);
 
         Button iniciar =
                 new Button(this);
@@ -85,14 +120,13 @@ public class MainActivity extends Activity {
         iniciar.setText(
                 "Iniciar captura");
 
-        iniciar.setTextSize(18);
-
         iniciar.setOnClickListener(
                 v -> solicitarCaptura());
 
         layout.addView(titulo);
         layout.addView(status);
         layout.addView(framesText);
+        layout.addView(posicaoText);
         layout.addView(iniciar);
 
         setContentView(layout);
@@ -102,8 +136,8 @@ public class MainActivity extends Activity {
 
         MediaProjectionManager manager =
                 (MediaProjectionManager)
-                getSystemService(
-                        MEDIA_PROJECTION_SERVICE);
+                        getSystemService(
+                                MEDIA_PROJECTION_SERVICE);
 
         Intent intent =
                 manager.createScreenCaptureIntent();
@@ -147,7 +181,7 @@ public class MainActivity extends Activity {
                     serviceIntent);
 
             status.setText(
-                    "Status: captura ativa");
+                    "Status: capturando");
         }
     }
 
@@ -159,7 +193,7 @@ public class MainActivity extends Activity {
         registerReceiver(
                 receiver,
                 new IntentFilter(
-                        "GODEYE_FRAME"),
+                        "GODEYE_DETECCAO"),
                 Context.RECEIVER_NOT_EXPORTED);
     }
 
