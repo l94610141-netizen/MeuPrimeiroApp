@@ -157,6 +157,7 @@ public class MainActivity extends Activity {
                     new TrajectoryOverlay(this);
 
             trajectoryOverlay.mostrar();
+            trajectoryOverlay.desenharLinha(300, 600, 900, 300);
 
 
             status.setText(
