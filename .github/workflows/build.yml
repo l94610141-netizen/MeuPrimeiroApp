@@ -2,7 +2,7 @@ name: Build Projeto 8
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "projeto8" ]
   workflow_dispatch:
 
 jobs:
