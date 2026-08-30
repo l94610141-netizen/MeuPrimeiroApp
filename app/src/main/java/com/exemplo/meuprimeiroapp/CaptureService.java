@@ -248,9 +248,9 @@ public class CaptureService extends Service {
                             int gg = (p >> 8) & 0xff;
                             int bb = p & 0xff;
 
-                            if (rr > 225 &&
-                                    gg > 225 &&
-                                    bb > 225) {
+                            if (rr > 190 &&
+                                    gg > 190 &&
+                                    bb > 190 && Math.abs(rr - gg) < 25 && Math.abs(rr - bb) < 25 && Math.abs(gg - bb) < 25) {
 
                                 quantidadeLocal++;
                                 somaLocalX += xx;
