@@ -19,6 +19,18 @@ public class MainActivity extends Activity {
 
     private GodeyeOverlay overlay;
     private TrajectoryOverlay trajectoryOverlay;
+    private BroadcastReceiver detectionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("GODEYE_DETECCAO".equals(intent.getAction())) {
+                int x = intent.getIntExtra("x", 0);
+                int y = intent.getIntExtra("y", 0);
+
+                if (trajectoryOverlay != null) {
+                }
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,14 +155,25 @@ public class MainActivity extends Activity {
 
             trajectoryOverlay.mostrar();
 
-            trajectoryOverlay.desenharLinha(
-                    300,
-                    600,
-                    900,
-                    300);
 
             status.setText(
-                    "Godeye ativo - trajetória de teste");
+                    "Godeye ativo - detectando bola branca");
         }
     }
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        registerReceiver(
+                detectionReceiver,
+                new IntentFilter("GODEYE_DETECCAO"),
+                Context.RECEIVER_NOT_EXPORTED);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(detectionReceiver);
+        super.onPause();
+    }
+
 }

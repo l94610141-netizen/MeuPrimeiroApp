@@ -101,7 +101,7 @@ public class TrajectoryOverlay {
                     Paint.ANTI_ALIAS_FLAG);
 
             paint.setColor(
-                    Color.GREEN);
+                    Color.WHITE);
 
             paint.setStrokeWidth(6f);
 

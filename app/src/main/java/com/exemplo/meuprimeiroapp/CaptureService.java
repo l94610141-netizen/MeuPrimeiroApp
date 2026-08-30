@@ -194,55 +194,86 @@ public class CaptureService extends Service {
             int largura,
             int altura) {
 
-        long somaX = 0;
-        long somaY = 0;
-        long quantidade = 0;
+        int passo = 4;
+
+        long melhorX = 0;
+        long melhorY = 0;
+        int melhorQuantidade = 0;
 
         /*
-         * Procuramos pixels muito claros.
-         *
-         * Isto é apenas um detector inicial.
-         * Na V2.1-B vamos melhorar a identificação
-         * para procurar uma região circular.
+         * Procuramos pequenas regiões de pixels claros.
+         * Ignoramos as bordas da tela para reduzir
+         * falsos positivos causados pela interface.
          */
+        int inicioY = altura / 10;
+        int fimY = altura * 9 / 10;
 
-        for (int y = 0; y < altura; y += 4) {
+        for (int y = inicioY; y < fimY; y += passo) {
 
-            for (int x = 0; x < largura; x += 4) {
+            for (int x = 0; x < largura; x += passo) {
 
-                int pixel =
-                        bitmap.getPixel(x, y);
+                int pixel = bitmap.getPixel(x, y);
 
-                int r =
-                        (pixel >> 16) & 0xff;
+                int r = (pixel >> 16) & 0xff;
+                int g = (pixel >> 8) & 0xff;
+                int b = pixel & 0xff;
 
-                int g =
-                        (pixel >> 8) & 0xff;
-
-                int b =
-                        pixel & 0xff;
-
-                /*
-                 * Branco aproximadamente neutro.
-                 */
                 if (r > 225 &&
                         g > 225 &&
                         b > 225) {
 
-                    somaX += x;
-                    somaY += y;
-                    quantidade++;
+                    int quantidadeLocal = 0;
+                    long somaLocalX = 0;
+                    long somaLocalY = 0;
+
+                    int raio = 12;
+
+                    for (int yy = y - raio;
+                         yy <= y + raio;
+                         yy += passo) {
+
+                        if (yy < inicioY || yy >= fimY)
+                            continue;
+
+                        for (int xx = x - raio;
+                             xx <= x + raio;
+                             xx += passo) {
+
+                            if (xx < 0 || xx >= largura)
+                                continue;
+
+                            int p = bitmap.getPixel(xx, yy);
+
+                            int rr = (p >> 16) & 0xff;
+                            int gg = (p >> 8) & 0xff;
+                            int bb = p & 0xff;
+
+                            if (rr > 225 &&
+                                    gg > 225 &&
+                                    bb > 225) {
+
+                                quantidadeLocal++;
+                                somaLocalX += xx;
+                                somaLocalY += yy;
+                            }
+                        }
+                    }
+
+                    if (quantidadeLocal > melhorQuantidade) {
+
+                        melhorQuantidade = quantidadeLocal;
+                        melhorX = somaLocalX / quantidadeLocal;
+                        melhorY = somaLocalY / quantidadeLocal;
+                    }
                 }
             }
         }
 
-        if (quantidade > 0) {
-
-            int centroX =
-                    (int)(somaX / quantidade);
-
-            int centroY =
-                    (int)(somaY / quantidade);
+        /*
+         * Uma bola produz uma pequena região
+         * consistente de pixels claros.
+         */
+        if (melhorQuantidade >= 8) {
 
             Intent resultado =
                     new Intent("GODEYE_DETECCAO");
@@ -253,11 +284,11 @@ public class CaptureService extends Service {
 
             resultado.putExtra(
                     "x",
-                    centroX);
+                    (int) melhorX);
 
             resultado.putExtra(
                     "y",
-                    centroY);
+                    (int) melhorY);
 
             sendBroadcast(resultado);
         }
