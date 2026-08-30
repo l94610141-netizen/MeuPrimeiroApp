@@ -189,107 +189,68 @@ public class CaptureService extends Service {
         }
     }
 
-    private void detectarBolaBranca(
-            Bitmap bitmap,
-            int largura,
-            int altura) {
-
+    private void detectarBolaBranca(Bitmap bitmap, int largura, int altura) {
         int passo = 4;
+        int melhorX = 0;
+        int melhorY = 0;
+        int melhorScore = 0;
 
-        long melhorX = 0;
-        long melhorY = 0;
-        int melhorQuantidade = 0;
-
-        /*
-         * Procuramos pequenas regiões de pixels claros.
-         * Ignoramos as bordas da tela para reduzir
-         * falsos positivos causados pela interface.
-         */
-        int inicioY = altura / 10;
-        int fimY = altura * 9 / 10;
+        int inicioY = altura / 8;
+        int fimY = altura * 7 / 8;
 
         for (int y = inicioY; y < fimY; y += passo) {
-
             for (int x = 0; x < largura; x += passo) {
 
-                int pixel = bitmap.getPixel(x, y);
+                int claros = 0;
+                int total = 0;
+                int raio = 14;
 
-                int r = (pixel >> 16) & 0xff;
-                int g = (pixel >> 8) & 0xff;
-                int b = pixel & 0xff;
+                for (int yy = y - raio; yy <= y + raio; yy += passo) {
+                    if (yy < inicioY || yy >= fimY) continue;
 
-                if (r > 225 &&
-                        g > 225 &&
-                        b > 225) {
+                    for (int xx = x - raio; xx <= x + raio; xx += passo) {
+                        if (xx < 0 || xx >= largura) continue;
 
-                    int quantidadeLocal = 0;
-                    long somaLocalX = 0;
-                    long somaLocalY = 0;
+                        int dx = xx - x;
+                        int dy = yy - y;
 
-                    int raio = 12;
+                        if (dx * dx + dy * dy > raio * raio) continue;
 
-                    for (int yy = y - raio;
-                         yy <= y + raio;
-                         yy += passo) {
+                        total++;
 
-                        if (yy < inicioY || yy >= fimY)
-                            continue;
+                        int p = bitmap.getPixel(xx, yy);
+                        int r = (p >> 16) & 0xff;
+                        int g = (p >> 8) & 0xff;
+                        int b = p & 0xff;
 
-                        for (int xx = x - raio;
-                             xx <= x + raio;
-                             xx += passo) {
+                        int brilho = (r + g + b) / 3;
 
-                            if (xx < 0 || xx >= largura)
-                                continue;
-
-                            int p = bitmap.getPixel(xx, yy);
-
-                            int rr = (p >> 16) & 0xff;
-                            int gg = (p >> 8) & 0xff;
-                            int bb = p & 0xff;
-
-                            if (rr > 190 &&
-                                    gg > 190 &&
-                                    bb > 190 && Math.abs(rr - gg) < 25 && Math.abs(rr - bb) < 25 && Math.abs(gg - bb) < 25) {
-
-                                quantidadeLocal++;
-                                somaLocalX += xx;
-                                somaLocalY += yy;
-                            }
+                        if (brilho > 175 &&
+                                Math.abs(r - g) < 35 &&
+                                Math.abs(r - b) < 35 &&
+                                Math.abs(g - b) < 35) {
+                            claros++;
                         }
                     }
+                }
 
-                    if (quantidadeLocal > melhorQuantidade) {
+                if (total == 0) continue;
 
-                        melhorQuantidade = quantidadeLocal;
-                        melhorX = somaLocalX / quantidadeLocal;
-                        melhorY = somaLocalY / quantidadeLocal;
-                    }
+                int score = claros * 100 / total;
+
+                if (claros >= 10 && score > melhorScore) {
+                    melhorScore = score;
+                    melhorX = x;
+                    melhorY = y;
                 }
             }
         }
 
-        /*
-         * Uma bola produz uma pequena região
-         * consistente de pixels claros.
-         */
-        if (melhorQuantidade >= 8) {
-
-            Intent resultado =
-                    new Intent("GODEYE_DETECCAO");
-
-            resultado.putExtra(
-                    "frames",
-                    frameCount);
-
-            resultado.putExtra(
-                    "x",
-                    (int) melhorX);
-
-            resultado.putExtra(
-                    "y",
-                    (int) melhorY);
-
+        if (melhorScore >= 20) {
+            Intent resultado = new Intent("GODEYE_DETECCAO");
+            resultado.putExtra("frames", frameCount);
+            resultado.putExtra("x", melhorX);
+            resultado.putExtra("y", melhorY);
             sendBroadcast(resultado);
         }
     }
