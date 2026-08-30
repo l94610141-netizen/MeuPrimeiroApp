@@ -33,3 +33,4 @@ jobs:
         with:
           name: MeuPrimeiroApp-debug
           path: app/build/outputs/apk/debug/*.apk
+# Build atualizado para a branch main
